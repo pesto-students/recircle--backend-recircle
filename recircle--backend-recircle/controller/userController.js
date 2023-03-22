@@ -4,200 +4,241 @@
 //const User = mongoose.model('User', UserSchema);
 // const User = require('../models/User')
 const { User } = require("../models/User");
+const bcrypt = require("bcrypt");
+const generateToken = require("../utils/generateToken");
+const mongoose = require('mongoose')
 
-//Signup
-// const signUp = async (req, res) => {
-//     try {
-//         const { name, email, password, phoneNumber, role, active, profileImage} = req.body;
-//         const user = await User.Create({
-//             name,
-//             email,
-//             password,
-//             phoneNumber,
-//             role,
-//             active,
-//             profileImage
-//         });
 
-//         res.json ({
-//             success : true,
-//             message : "Registered User successfully",
-//             data : {
-//                 id : user.id,
-//                 email : user.email,
-//                 name : user.name,
-//                 phoneNumber : user.phoneNumber,
-//                 role : user.role,
-//                 profileImage : user.profileImage,
-//             }
-//         });
-//     } catch (error) { 
-//         res.json ({success: false, message: "User already exists"})
-//     }
-// }
- const signUp = (req, res) => {
-  let user = new user ({
-    name : req.body.name,
-    email : req.body.email,
-    phoneNumber : req.body.phoneNumber,
-    profileImage : req.body.profileImage
-  })
-  user.save()
-  .then(response => {
-    res.json ({
-      message: "User added succesfully"
-    })
-  }) 
-  .catch(error => {
-    res.json ({
-      message: "Error in adding user"
-    })
-  })
- }
+const userSignUp = async (req, res) => {
+  try {
+      const { name, email, password, phoneNumber, role, active, profileImage } = req.body;
+      // generate salt to hash password
+      const salt = await bcrypt.genSalt(10);
+      // now we set user password to hashed password
+      let encryptedPassword = await bcrypt.hash(password, salt);
 
-  //Get all users
-  const UserList = async (req, res) => {
-    User.find()
-    .then(response => {
+      const user = await User.create({
+          name,
+          email,
+          phoneNumber,
+          password: encryptedPassword,
+          role,
+          active,
+          profileImage
+      });
+
       res.json({
-        response
-      })
-    })
-    .catch(_error => {
-        res.json ({
-          message: "An error occured!"
-        })
-    })
+          success: true,
+          message: "Registered successfully!",
+          data: {
+              _id: user._id,
+              email: user.email,
+              name: user.name,
+              phoneNumber: user.phoneNumber,
+              role: user.role,
+              profileImage: user.profileImage,
+              token: generateToken(user._id)
+          }
+      });
+  } catch (error) {
+      res.json({ success: false, message: "User already exist!" });
   }
+};
 
-  //Get user by ID
-  const UserById = async (req, res) => {
-    let userID = req.body.userID
-    User.findById(userID)
-    .then(response => {
-      res.json ({
-        response
-      })
-    })
-    .catch(
-      error => {
-        res.json ({
-          message : "An error occured!"
-        })
+const userLogin = async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+
+  if (user) {
+      // check user password with hashed password stored in the database
+      const validPassword = await bcrypt.compare(password, user.password);
+
+      if (validPassword) {
+          res.json({
+              success: true,
+              message: "Loggedin successfully!",
+              data: {
+                  _id: user._id,
+                  email: user.email,
+                  name: user.name,
+                  phoneNumber: user.phoneNumber,
+                  role: user.role,
+                  profileImage: user.profileImage,
+                  token: generateToken(user._id)
+              }
+          });
+      } else {
+          res.json({ success: false, message: "Invalid Password" });
       }
-    )
+  } else {
+      res.json({ success: false, message: "User not found!" });
   }
-//
-  //Add an employee
-  const addUser = (req, res) => {
-    let user = new User ({
-      name: req.body.name,
-      designation: req.body.designation,
-      email: req.body.email,
-      phone: req.body.phone,
-      age: req.body.age,
-      branch: req.body.branch
-    })
-    user.save()
-    .then(() => {
-        res.json({message: 'Employee added succesfully'
-        })
-    }).catch(() => {
-      res.json ({
-        message: 'An error Occured!'
-      })
-    })
-  }
+};
 
-//Update a user
-const updateUser = (req, res) => {
-  let userID = userID
+const userSocial = async (req, res) => {
+  const { name, email, phoneNumber, profileImage, loginType } = req.body;
+  const user = await User.findOne({ email });
 
-  let updatedData = {
-    name: req.body.name,
-    designation: req.body.designation,
-    email: req.body.email,
-    phone: req.body.phone,
-    age: req.body.age,
-    branch: req.body.branch
+  try {
+
+      if (user) {
+          res.json({
+              success: true,
+              message: "Loggedin successfully!",
+              data: {
+                  _id: user._id,
+                  email: user.email,
+                  name: user.name,
+                  phoneNumber: user.phoneNumber,
+                  role: user.role,
+                  profileImage: user.profileImage,
+                  token: generateToken(user._id)
+              }
+          });
+      } else {
+          const user = await User.create({
+              name,
+              email,
+              phoneNumber,
+              password: "null",
+              profileImage,
+              loginType
+          });
+
+          res.json({
+              success: true,
+              message: "Loggedin successfully!",
+              data: {
+                  _id: user._id,
+                  email: user.email,
+                  name: user.name,
+                  phoneNumber: user.phoneNumber,
+                  role: user.role,
+                  profileImage: user.profileImage,
+                  token: generateToken(user._id)
+              }
+          });
+      }
+  } catch (error) {
+      console.log(error)
+      res.json({ success: false, message: "Something went wrong!" });
   }
-  User.findByIdAndUpdate(userID, {$set: updatedData})
-  .then(() => {
-    res.json({
-      message: 'User updated successfully'
-    })
-    .catch(()=> {
-      res.json ({
-        message: 'An error occured!'
-      })
-    })
-  })
 }
 
-//Delete an employee
 
-const deleteUser = (req, res) => {
-  let userID = req.body.userID
-  User.findByIdAndRemove(userID)
-  .then(() => {
-    res.json({
-      message: 'User deleted succuessfully'
-    })
-    .catch(() => {
-      res.json ({
-        message: 'An error occured!'
-      })
-    })
-  })
-}
+
+const getAllUsers = async (req, res) => {
+  try {
+      const users = await User.find()
+
+      res.json({
+          success: true,
+          data: users
+      });
+  } catch (error) {
+      res.json({ success: false, message: "Something went wrong!" });
+  }
+};
+
+
+const getUser = async (req, res) => {
+  const { _id: userId } = req.user
+  try {
+      const { _id, name, email, phoneNumber, role, profileImage } = await User.findOne({ _id: userId })
+      res.json({
+          success: true,
+          data: { _id, name, email, phoneNumber, role, profileImage }
+      });
+  } catch (error) {
+      res.json({ success: false, message: "Something went wrong!" });
+  }
+};
+
+const uploadUserProfile = async (req, res) => {
+  const { userId } = req.params
+  const { name, phoneNumber, password, role, profileImage } = req.body
+
+  try {
+      const user = await User.findByIdAndUpdate(
+          { _id: userId },
+          {
+              name, phoneNumber, password, role, profileImage
+          },
+          { new: true }
+      );
+
+      res.json({
+          success: true,
+          data: {
+              _id: user._id,
+              name: user.name,
+              email: user.email,
+              phoneNumber: user.phoneNumber,
+              role: user.role,
+              profileImage: user.profileImage,
+          }
+      });
+
+  } catch (error) {
+      console.log(error)
+      res.json({ success: false, message: "Something went wrong!" });
+  }
+};
+
+
+const changePassword = async (req, res) => {
+  const { _id: userId } = req.user
+  const { currentPassword, newPassword } = req.body
+
+  try {
+      const user = await User.findOne({ _id: userId });
+      if (user) {
+          // check user password with hashed password stored in the database
+          const validPassword = await bcrypt.compare(currentPassword, user.password);
+
+          if (!validPassword) {
+              res.json({ success: false, message: "Please enter valid password!" });
+
+          }
+
+
+          // generate salt to hash password
+          const salt = await bcrypt.genSalt(10);
+          // now we set user password to hashed password
+          let encryptedPassword = await bcrypt.hash(newPassword, salt);
+
+          const updatedUser = await User.findByIdAndUpdate(
+              { _id: userId },
+              {
+                  password: encryptedPassword
+              },
+              { new: true }
+          )
+
+          if (updatedUser) {
+              res.json({
+                  success: true,
+                  message: "Password Changed Successfully!"
+              });
+          } else {
+              res.json({ success: false, message: "Something went wrong!" });
+          }
+      }
+
+  } catch (error) {
+      console.log(error)
+      res.json({ success: false, message: "Something went wrong!" });
+  }
+};
+
   module.exports = {
-    signUp,
-    addUser,
-    UserList,
-    UserById,
-    updateUser,
-    deleteUser
+    userSignUp,
+    userLogin,
+    userSocial,
+    getAllUsers,
+    getUser,
+    uploadUserProfile,
+    changePassword
   }
 
    
-
-
-  //Update a user
-  // app.patch('/users/:id', async (req, res) => {
-  //   const updates = Object.keys(req.body);
-  //   const allowedUpdates = ['name', 'email', 'password', 'phoneNumber', 'profileImage', 'role', 'loginType', 'active', 'ScrapOrders'];
-  //   const isValidOperation = updates.every(update => allowedUpdates.includes(update));
-  
-  //   if (!isValidOperation) {
-  //     return res.status(400).send({ error: 'Invalid updates!' });
-  //   }
-  
-  //   try {
-  //     const user = await User.findById(req.params.id);
-  //     if (!user) {
-  //       return res.status(404).send();
-  //     }
-  
-  //     updates.forEach(update => user[update] = req.body[update]);
-  //     await user.save();
-  
-  //     res.send(user);
-  //   } catch (error) {
-  //     res.status(400).send(error);
-  //   }
-  // });
-
-  //Delete a user
-
-  // app.delete('/users/:id', async (req, res) => {
-  //   try {
-  //     const user = await User.findByIdAndDelete(req.params.id);
-  //     if (!user) {
-  //       return res.status(404).send();
-  //     }
-  //     res.send(user);
-  //   } catch (error) {
-  //     res.status(500).send(error);
-  //   }
-  // });
-
