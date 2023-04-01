@@ -1,7 +1,14 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const app = express();
+const mongoose = require("mongoose");
 
-mongoose.connect('mongodb://localhost/my_database', { useNewUrlParser: true, useUnifiedTopology: true });
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+const connectDB = async () => {
+  try {
+    const conn = await (mongoose.connect('mongodb://localhost:27017/Recircle'));
+
+    console.log(`MongoDB connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+module.exports = { connectDB };

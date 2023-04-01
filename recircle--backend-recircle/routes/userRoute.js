@@ -17,8 +17,8 @@ router.route("/login").post(userLogin);
 router.route("/social-login").post(userSocial);
 router.route("/getAll").post(admin, authenticate, getAllUsers);
 router.route("/getUser").get(authenticate, getUser);
-router.route("/updateUserProfile/:userId").put(authenticate, uploadUserProfile);
-router.route("/change-password").post(authenticate, changePassword);
+router.route("/updateUserProfile/:userId").put(uploadUserProfile);
+router.route("/:id/change-password").post(changePassword);
 
 
 

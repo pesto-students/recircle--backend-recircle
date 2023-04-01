@@ -1,31 +1,25 @@
-const express = require('express')
-const mongoose = require('mongoose')
-const morgan = require('morgan')
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
 const bodyParser = require('body-parser')
+const { connectDB } = require("./config/db");
 
 const userRoute = require('./routes/userRoute')
 
-mongoose.connect('mongodb://localhost:27017/Recircle', {useNewUrlParser: true, useUnifiedTopology: true})
-const db = mongoose.connection
+dotenv.config();
+const app = express();
 
-db.on('error', (err) => {
-    console.log(err)
-})
-
-db.once('open', () => {
-    console.log('Database connection established')
-})
-
-const app = express()
-
-app.use(morgan('dev'))
-app.use(bodyParser.urlencoded({extended: true}))
+app.use(cors());
+app.use(express.json());
 app.use(bodyParser.json())
 
-//const PORT = process.env.PORT || 3000
-const PORT =  3000
-app.listen(PORT, ()=> {
-    console.log(`Server is running on port ${PORT}`)
-})
+connectDB();
 
-app.use('/api/user', userRoute)
+//const port = process.env.PORT || 3000;
+const port = 3000;
+app.get("/", (req, res) => res.send({ status: "API running!" }));
+
+app.use("/user", userRoute);
+
+
+app.listen(port, () => console.log(`Server started on PORT ${port}`));

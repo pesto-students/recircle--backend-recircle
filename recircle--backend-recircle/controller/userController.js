@@ -6,75 +6,86 @@
 const { User } = require("../models/User");
 const bcrypt = require("bcrypt");
 const generateToken = require("../utils/generateToken");
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const express = require('express');
+const bodyParser = require('body-parser');
 
 
 const userSignUp = async (req, res) => {
-  try {
-      const { name, email, password, phoneNumber, role, active, profileImage } = req.body;
-      // generate salt to hash password
-      const salt = await bcrypt.genSalt(10);
-      // now we set user password to hashed password
-      let encryptedPassword = await bcrypt.hash(password, salt);
+  // Signup API
 
-      const user = await User.create({
-          name,
-          email,
-          phoneNumber,
-          password: encryptedPassword,
-          role,
-          active,
-          profileImage
+// Define a signup endpoint
+// app.post('/signup', async (req, res) => {
+    try {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  
+      // Create a new user with the hashed password
+      const user = new User({
+        name: req.body.name,
+        email: req.body.email,
+        password: hashedPassword,
+        phoneNumber: req.body.phoneNumber,
+        profileImage: req.body.profileImage,
+        role: req.body.role,
+        loginType: req.body.loginType,
       });
-
-      res.json({
-          success: true,
-          message: "Registered successfully!",
-          data: {
-              _id: user._id,
-              email: user.email,
-              name: user.name,
-              phoneNumber: user.phoneNumber,
-              role: user.role,
-              profileImage: user.profileImage,
-              token: generateToken(user._id)
-          }
+  
+      // Save the user to the database
+      await user.save();
+  
+      // Generate a JWT token
+      const token = jwt.sign({ userId: user._id }, 'mysecretkey');
+  
+      // Send the response with the user data and token
+      res.status(201).json({
+        status: 'success',
+        data: {
+          user,
+          token,
+        },
       });
-  } catch (error) {
-      res.json({ success: false, message: "User already exist!" });
-  }
-};
-
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
+  
 const userLogin = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+ // Login API
+ try {
+    // Find the user with the given email
+    const user = await User.findOne({ email: req.body.email }).select('+password');
 
-  if (user) {
-      // check user password with hashed password stored in the database
-      const validPassword = await bcrypt.compare(password, user.password);
+    // Check if the user exists
+    if (!user) {
+      return res.status(401).json({ status: 'fail', message: 'Invalid email or password' });
+    }
 
-      if (validPassword) {
-          res.json({
-              success: true,
-              message: "Loggedin successfully!",
-              data: {
-                  _id: user._id,
-                  email: user.email,
-                  name: user.name,
-                  phoneNumber: user.phoneNumber,
-                  role: user.role,
-                  profileImage: user.profileImage,
-                  token: generateToken(user._id)
-              }
-          });
-      } else {
-          res.json({ success: false, message: "Invalid Password" });
-      }
-  } else {
-      res.json({ success: false, message: "User not found!" });
+    // Check if the password is correct
+    const isPasswordCorrect = await bcrypt.compare(req.body.password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ status: 'fail', message: 'Invalid email or password' });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user._id }, 'mysecretkey');
+
+    // Send the response with the user data and token
+    res.status(200).json({
+      status: 'success',
+      data: {
+        userId: user._id,
+        token,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
-
+  
 const userSocial = async (req, res) => {
   const { name, email, phoneNumber, profileImage, loginType } = req.body;
   const user = await User.findOne({ email });
@@ -142,94 +153,89 @@ const getAllUsers = async (req, res) => {
 
 
 const getUser = async (req, res) => {
-  const { _id: userId } = req.user
-  try {
-      const { _id, name, email, phoneNumber, role, profileImage } = await User.findOne({ _id: userId })
-      res.json({
-          success: true,
-          data: { _id, name, email, phoneNumber, role, profileImage }
-      });
-  } catch (error) {
-      res.json({ success: false, message: "Something went wrong!" });
-  }
-};
+// Define a route for getting a user by ID
+// app.get('/users/:userId', async (req, res) => {
+    try {
+      // Check if the user is an admin
+      if (req.user.role !== 'Admin') {
+        return res.status(401).json({ status: 'fail', message: 'Unauthorized' });
+      }
+  
+      // Find the user with the given ID
+      const user = await User.findById(req.params.userId);
+  
+      // Check if the user exists
+      if (!user) {
+        return res.status(404).json({ status: 'fail', message: 'User not found' });
+      }
+  
+      // Send the response with the user data
+      res.status(200).json({ status: 'success', data: user });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ status: 'error', message: error.message });
+    }
+  };
 
 const uploadUserProfile = async (req, res) => {
-  const { userId } = req.params
-  const { name, phoneNumber, password, role, profileImage } = req.body
-
-  try {
-      const user = await User.findByIdAndUpdate(
-          { _id: userId },
-          {
-              name, phoneNumber, password, role, profileImage
-          },
-          { new: true }
-      );
-
-      res.json({
-          success: true,
-          data: {
-              _id: user._id,
-              name: user.name,
-              email: user.email,
-              phoneNumber: user.phoneNumber,
-              role: user.role,
-              profileImage: user.profileImage,
-          }
-      });
-
-  } catch (error) {
-      console.log(error)
-      res.json({ success: false, message: "Something went wrong!" });
-  }
-};
-
+    try {
+        // Find the user with the given ID and update their data
+        const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
+    
+        // Check if the user exists
+        if (!user) {
+          return res.status(404).json({ status: 'fail', message: 'User not found' });
+        }
+    
+        // Send the response with the updated user data
+        res.status(200).json({ status: 'success', data: user });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: error.message });
+      }
+    };
 
 const changePassword = async (req, res) => {
-  const { _id: userId } = req.user
-  const { currentPassword, newPassword } = req.body
-
-  try {
-      const user = await User.findOne({ _id: userId });
-      if (user) {
-          // check user password with hashed password stored in the database
-          const validPassword = await bcrypt.compare(currentPassword, user.password);
-
-          if (!validPassword) {
-              res.json({ success: false, message: "Please enter valid password!" });
-
+    // router.post('/change_password', authMiddleware, async (req, res) => {
+        try {
+            // Get the user ID from the request parameters
+            const userId = req.params.id;
+        
+            // Get the old and new passwords from the request body
+            const { oldPassword, newPassword } = req.body;
+        
+            // Find the user in the database by ID
+            const user = await User.findById(userId);
+        
+            // If the user doesn't exist, return a 404 error
+            if (!user) {
+              return res.status(404).json({ error: 'User not found' });
+            }
+        
+            // Check if the old password is correct
+            const isPasswordCorrect = await bcrypt.compare(oldPassword, user.password);
+            if (!isPasswordCorrect) {
+              return res.status(401).json({ error: 'Old password is incorrect' });
+            }
+        
+            // Hash the new password
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        
+            // Update the user's password in the database
+            user.password = hashedNewPassword;
+            await user.save();
+        
+            // Generate a new JSON web token with the updated user data
+            const token = jwt.sign({ userId: user._id }, 'secret-key', { expiresIn: '1h' });
+        
+            // Return the updated user data and token in the response
+            res.json({ user, token });
+          } catch (err) {
+            // If there's an error, return a 500 error with the error message
+            res.status(500).json({ error: err.message });
           }
-
-
-          // generate salt to hash password
-          const salt = await bcrypt.genSalt(10);
-          // now we set user password to hashed password
-          let encryptedPassword = await bcrypt.hash(newPassword, salt);
-
-          const updatedUser = await User.findByIdAndUpdate(
-              { _id: userId },
-              {
-                  password: encryptedPassword
-              },
-              { new: true }
-          )
-
-          if (updatedUser) {
-              res.json({
-                  success: true,
-                  message: "Password Changed Successfully!"
-              });
-          } else {
-              res.json({ success: false, message: "Something went wrong!" });
-          }
-      }
-
-  } catch (error) {
-      console.log(error)
-      res.json({ success: false, message: "Something went wrong!" });
-  }
-};
+        };
+        
 
   module.exports = {
     userSignUp,
