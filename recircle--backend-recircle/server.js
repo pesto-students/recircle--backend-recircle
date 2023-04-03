@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const { connectDB } = require("./config/db");
 
 const userRoute = require('./routes/userRoute')
+const scrapRoute = require('./routes/scrapRoute')
 
 dotenv.config();
 const app = express();
@@ -20,6 +21,7 @@ const port = 3000;
 app.get("/", (req, res) => res.send({ status: "API running!" }));
 
 app.use("/user", userRoute);
+app.use("/scrap", scrapRoute);
 
 
 app.listen(port, () => console.log(`Server started on PORT ${port}`));

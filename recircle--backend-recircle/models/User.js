@@ -27,28 +27,38 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
+const ScrapSaleSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    require: true,
+    ref: "User"
+  },
+  selectedItems: {
+    type: [String],
+ 
+  },
+  selectedMaterials: {
+    type: [String],
+   
+  },
+  address: {
+    type: String,
+   
+  },
+  date: {
+    type: Date,
+   
+  },
+}, { timestamps: true });
 
-//Define schema
-const ScrapSchema = new Schema({
-  User: { type: Schema.Types.ObjectId, ref: 'User', required: true},
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  location: { type: String,required: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-
-
+const ScrapSale = mongoose.model('ScrapSale', ScrapSaleSchema);
 const User = mongoose.model('User', UserSchema);
-// const Scrap = mongoose.model("Scrap", ScrapSchema);
 // const Purchase = mongoose.model("Purchase", PurchaseSchema);
 // const Message = mongoose.model("Message", MessageSchema);
 
 module.exports = {
   User,
-  // Scrap,
+  ScrapSale
   // Purchase,
   // Message
 };
