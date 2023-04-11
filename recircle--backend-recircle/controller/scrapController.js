@@ -4,23 +4,21 @@ const { ScrapSale } = require("../models/User");
 
 const app = express();
 app.use(bodyParser.json());
-
-// const ScrapSale = require('./models/scrapSale')
 const { User } = require("../models/User");
 
-// const ScrapSale = require('./models/scrapSale');
-// const User = require('./models/user');
-
-// app.post('/api/scrap-sales/selectItems', async (req, res) => {
-  const selectItems = async (req, res) => {
+// Post api to select Items 
+const selectItems = async (req, res) => {
   try {
     const { userID, selectedItems } = req.body;
     const user = await User.findById(userID);
     if (!user) {
       res.status(404).send('User not found');
     }
-    const scrapSale = new ScrapSale({ selectedItems });
-    scrapSale.userID = userID;
+    const scrapSale = new ScrapSale({
+      selectedItems,
+      user: user._id,
+      createdBy: user._id
+    });
     await scrapSale.save();
     res.send(scrapSale);
   } catch (error) {
@@ -29,7 +27,7 @@ const { User } = require("../models/User");
   }
 };
 
-// app.post('/api/scrap-sales/selectMaterials', async (req, res) => {
+// POst API to select moterial
   const selectMaterials = async (req, res) => {
   try {
     const { id, selectedMaterials } = req.body;
@@ -46,7 +44,7 @@ const { User } = require("../models/User");
   }
 };
 
-// app.post('/api/scrap-sales/address-date', async (req, res) => {
+// Post api to select date and address
   const addressdate = async (req, res) => {
   try {
     const { id, address, date } = req.body;
@@ -64,7 +62,7 @@ const { User } = require("../models/User");
   }
 };
 
-// app.post('/api/scrap-sales/confirm', async (req, res) => {
+//Post api to confirm order
   const confirm = async (req, res) => {
   try {
     const { id } = req.body;
@@ -135,14 +133,26 @@ const deleteOrder = async (req, res) => {
 // GET request to retrieve all scrap sale orders
 const GetAllOrders = async (req, res) => {
   try {
-    const allOrders = await ScrapSale.find();
-    res.send(allOrders);
+    const scrapSales = await ScrapSale.find().populate('user');
+    if (!scrapSales) {
+      res.status(404).send('Scrap sales not found');
+    }
+    const data = scrapSales.map((scrapSale) => ({
+      selectedMaterials: scrapSale.selectedMaterials,
+      address: scrapSale.address,
+      date: scrapSale.date,
+      userName: scrapSale.user ? scrapSale.user.name : '',
+      phoneNumber: scrapSale.user ? scrapSale.user.phoneNumber : ''
+    }));
+    res.json({
+      success: true,
+      data
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send(error);
   }
 };
-
 //Get all orders of a single user
 // router.get('/orders/:userId', async (req, res) => {
   const UserOrderHistory = async (req, res) => {  

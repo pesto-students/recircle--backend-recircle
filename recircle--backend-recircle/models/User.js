@@ -24,41 +24,73 @@ const UserSchema = new mongoose.Schema({
     default: true,
     select: false
   },
+  country: {
+    type: String,
+    default: true
+  },
+  gender: {
+    type: String,
+    default: true
+  },
+  dateofbirth: {
+    type: String,
+    default: true
+  },
 }, { timestamps: true });
+
 
 
 const ScrapSaleSchema = new mongoose.Schema({
-  userId: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
-    require: true,
-    ref: "User"
+    ref: 'User',
+    required: true
   },
   selectedItems: {
     type: [String],
- 
   },
   selectedMaterials: {
     type: [String],
-   
   },
   address: {
     type: String,
-   
   },
   date: {
-    type: Date,
-   
+    type: Date, 
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+}, { timestamps: true });
+
+// const ScrapSale = mongoose.model('ScrapSale', ScrapSaleSchema);
+
+const EventSchema = new mongoose.Schema ({
+  name: { type: String, required: true },
+  description: {type: String, required: true},
+  address: {
+    type: String,
+    required: true,
+  },
+  date: {
+    type: Date, 
+    required: true,
   },
 }, { timestamps: true });
 
+
 const ScrapSale = mongoose.model('ScrapSale', ScrapSaleSchema);
 const User = mongoose.model('User', UserSchema);
+const Event = mongoose.model('Event', EventSchema);
 // const Purchase = mongoose.model("Purchase", PurchaseSchema);
 // const Message = mongoose.model("Message", MessageSchema);
 
 module.exports = {
   User,
-  ScrapSale
+  ScrapSale,
+  Event
   // Purchase,
   // Message
 };
