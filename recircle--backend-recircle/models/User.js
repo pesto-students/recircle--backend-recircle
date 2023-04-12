@@ -81,16 +81,37 @@ const EventSchema = new mongoose.Schema ({
 }, { timestamps: true });
 
 
+const eventRegistrationSchema = new mongoose.Schema({
+  eventName: {
+    type: String,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+  },
+});
+
+
 const ScrapSale = mongoose.model('ScrapSale', ScrapSaleSchema);
 const User = mongoose.model('User', UserSchema);
 const Event = mongoose.model('Event', EventSchema);
+const EventRegistration = mongoose.model('EventRegistration', eventRegistrationSchema);
 // const Purchase = mongoose.model("Purchase", PurchaseSchema);
 // const Message = mongoose.model("Message", MessageSchema);
 
 module.exports = {
   User,
   ScrapSale,
-  Event
+  Event,
+  EventRegistration
   // Purchase,
   // Message
 };

@@ -77,7 +77,8 @@ const userLogin = async (req, res) => {
       status: 'success',
       data: {
         userId: user._id,
-        token,
+        role: user.role,
+        token
       },
     });
   } catch (error) {
