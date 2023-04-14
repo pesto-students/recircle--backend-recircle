@@ -5,13 +5,19 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phoneNumber: { type: String },
-  profileImage: { type: String },
-  role: {
+  // phoneNumber: { type: String },
+  // profileImage: { type: String },
+  _role: {
     type: String,
     enum: ['User', 'Buyer', 'Admin'],
     default: "User",
     required: true
+  },
+  get role() {
+    return this._role;
+  },
+  set role(value) {
+    this._role = value;
   },
   loginType: {
     type: String,

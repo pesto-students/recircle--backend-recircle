@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    const conn = await (mongoose.connect('mongodb://localhost:27017/Recircle'));
+    const conn = await (mongoose.connect('mongodb+srv://divij:divij123@cluster0.87sbvjj.mongodb.net/test'));
 
     console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {

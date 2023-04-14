@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { User } = require("../models/User");
+const config = require("../config/auth.config");
 
 const authenticate = async (req, res, next) => {
   let token;
@@ -10,7 +11,7 @@ const authenticate = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
+      const decode = jwt.verify(token, config.secret);
 
       req.user = await User.findById(decode.id).select("-password");
 
@@ -41,7 +42,7 @@ const admin = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
+      const decode = jwt.verify(token, config.secret);
 
       const user = await user.findById(decode.id).select("-password");
 

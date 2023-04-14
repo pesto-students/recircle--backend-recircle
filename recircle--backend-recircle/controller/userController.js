@@ -26,8 +26,8 @@ const userSignUp = async (req, res) => {
         name: req.body.name,
         email: req.body.email,
         password: hashedPassword,
-        phoneNumber: req.body.phoneNumber,
-        profileImage: req.body.profileImage,
+        // phoneNumber: req.body.phoneNumber,
+        // profileImage: req.body.profileImage,
         role: req.body.role,
         loginType: req.body.loginType,
       });

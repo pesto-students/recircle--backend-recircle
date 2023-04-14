@@ -17,7 +17,7 @@ app.use(bodyParser.json())
 connectDB();
 
 //const port = process.env.PORT || 3000;
-const port = 3000;
+const port = 5000;
 app.get("/", (req, res) => res.send({ status: "API running!" }));
 
 app.use("/user", userRoute);
